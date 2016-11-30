@@ -1,0 +1,16 @@
+package: github.com/babl/babl-errors
+import:
+- package: github.com/Shopify/sarama
+  version: bd61cae2be85fa6ff40eb23dcdd24567967ac2ae
+- package: github.com/Sirupsen/logrus
+- package: github.com/larskluge/babl-server
+  subpackages:
+  - kafka
+  - utils
+- package: github.com/larskluge/babl
+  subpackages:
+  - bablnaming
+- package: github.com/urfave/cli
+testImport:
+- package: github.com/onsi/ginkgo
+- package: github.com/onsi/gomega
