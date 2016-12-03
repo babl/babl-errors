@@ -83,15 +83,21 @@ func ParseEvents(Cluster string, brokers []string) {
 			Status := data["status"]
 			Stderr := data["stderr"]
 			Module := data["module"]
+			Rid := data["rid"].(string)
 
 			// catch execution errors
 			if Code == "req-executed" && Status != "SUCCESS" {
-				str := fmt.Sprintf("[%s] %s --> %s: %s", Cluster, stripContainerName(m.ContainerName), Status, Stderr)
+				str := fmt.Sprintf("[%s] %s:rid:...%s --> %s: %s", Cluster, Rid[len(Rid)-5:], stripContainerName(m.ContainerName), Status, Stderr)
 				notify(Cluster, str)
 			}
-			//catch timeouts
-			if Code == "completed" && Status != "SUCCESS" && Status != "ERROR" {
-				str := fmt.Sprintf("[%s] %s --> %s", Cluster, Module, Status)
+			//catch execution canceling
+			if Code == "req-execution-canceled" && Status != "SUCCESS" {
+				str := fmt.Sprintf("[%s] %s:rid:...%s --> %s: %s", Cluster, Rid[len(Rid)-5:], stripContainerName(m.ContainerName), Status, Stderr)
+				notify(Cluster, str)
+			}
+			//catch global module timeout
+			if Code == "completed" && Status == "MODULE_RESPONSE_TIMEOUT" {
+				str := fmt.Sprintf("[%s] %s:rid:...%s --> %s", Cluster, Module, Rid[len(Rid)-5:], Status)
 				notify(Cluster, str)
 			}
 		}
