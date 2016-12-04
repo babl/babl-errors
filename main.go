@@ -23,7 +23,8 @@ const (
 )
 
 var (
-	executed = regexp.MustCompile("(?i)req-executed")
+	executed  = regexp.MustCompile("(?i)req-executed")
+	bablError = regexp.MustCompile("(?i)Babl::ModuleError")
 )
 
 type Msg struct {
@@ -83,21 +84,25 @@ func ParseEvents(Cluster string, brokers []string) {
 			Status := data["status"]
 			Stderr := data["stderr"]
 			Module := data["module"]
-			Rid := data["rid"].(string)
+			Rid := data["rid"]
+
+			if Stderr != nil && bablError.MatchString(Stderr.(string)) {
+				Stderr = "Babl::ModuleError"
+			}
 
 			// catch execution errors
 			if Code == "req-executed" && Status != "SUCCESS" {
-				str := fmt.Sprintf("[%s] %s:rid:...%s --> %s: %s", Cluster, Rid[len(Rid)-5:], stripContainerName(m.ContainerName), Status, Stderr)
+				str := fmt.Sprintf("[%s] %s[%s] --> %s: %s", Cluster, stripContainerName(m.ContainerName), Rid, Status, Stderr)
 				notify(Cluster, str)
 			}
 			//catch execution canceling
 			if Code == "req-execution-canceled" && Status != "SUCCESS" {
-				str := fmt.Sprintf("[%s] %s:rid:...%s --> %s: %s", Cluster, Rid[len(Rid)-5:], stripContainerName(m.ContainerName), Status, Stderr)
+				str := fmt.Sprintf("[%s] %s[%s] --> %s", Cluster, stripContainerName(m.ContainerName), Rid, "EXECUTION CANCELED")
 				notify(Cluster, str)
 			}
 			//catch global module timeout
 			if Code == "completed" && Status == "MODULE_RESPONSE_TIMEOUT" {
-				str := fmt.Sprintf("[%s] %s:rid:...%s --> %s", Cluster, Module, Rid[len(Rid)-5:], Status)
+				str := fmt.Sprintf("[%s] %s[%s] --> %s", Cluster, Module, Rid.(string), Status)
 				notify(Cluster, str)
 			}
 		}
