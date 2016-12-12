@@ -134,5 +134,7 @@ func notify(Cluster string, Msg string) {
 	cmd := exec.Command("/bin/babl", args...)
 	cmd.Stdin = strings.NewReader(Msg)
 	err := cmd.Run()
-	Check(err)
+	if err != nil {
+		log.WithFields(log.Fields{"error": err}).Warn("No babl/events module?")
+	}
 }
